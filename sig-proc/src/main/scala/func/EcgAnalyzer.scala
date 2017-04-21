@@ -38,7 +38,7 @@ object EcgAnalyzer {
   private def convolve(a: DenseVector[Double], v: DenseVector[Double]): DenseVector[Double] = {
     breezeConvolve(a, v, overhang = OptOverhang.PreserveLength)
   }
- 
+
   private def shannonEnergy(sig: DenseVector[Double], thr: Double, maxPower: Double) = {
     sig.map { x =>
       if (x < thr) 0.0
