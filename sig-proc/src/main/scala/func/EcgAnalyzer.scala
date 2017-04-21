@@ -38,20 +38,7 @@ object EcgAnalyzer {
   private def convolve(a: DenseVector[Double], v: DenseVector[Double]): DenseVector[Double] = {
     breezeConvolve(a, v, overhang = OptOverhang.PreserveLength)
   }
-
-  private def correlate(a: DenseVector[Double], v: DenseVector[Double]): DenseVector[Double] = {
-    breezeCorrelate(a, v, overhang = OptOverhang.PreserveLength)
-  }
-
-
-  /**
-    * Shannon energy for a signal
-    * r
-    * Shannon energy for a point:
-    * shannonEnergy(x) =
-    *  -(x/maxPower)^2 * log((x/maxPower)^2) if x > thr
-    *  0 otherwise
-    */
+ 
   private def shannonEnergy(sig: DenseVector[Double], thr: Double, maxPower: Double) = {
     sig.map { x =>
       if (x < thr) 0.0
