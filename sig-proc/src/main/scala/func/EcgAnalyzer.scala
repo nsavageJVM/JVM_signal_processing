@@ -52,7 +52,7 @@ object EcgAnalyzer {
         else {
           val _normSquared = pow(_norm, 2)
           val shennon_energy = -_normSquared * math.log(_normSquared)
-          if (shennon_energy.isNaN) 0.0 else _norm
+          if (shennon_energy.isNaN) 0.0 else shennon_energy
         }
       }
     }
