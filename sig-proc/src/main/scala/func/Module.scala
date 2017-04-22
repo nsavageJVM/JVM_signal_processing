@@ -1,12 +1,12 @@
 package func;
 
-case class EcgRecord(num: Long, ecg: Double)
+case class EcgPoint(num: Long, ecg: Double)
 
-object EcgRecord {
+object EcgPoint {
 
   def parseEcg(s: String) = {
     val Array(long, dbl) = s.split(",")
-    EcgRecord(long.toLong, dbl.toDouble)
+    EcgPoint(long.toLong, dbl.toDouble)
   }
 
 }
@@ -18,13 +18,13 @@ import breeze.math.Ring
 
 import scala.reflect.ClassTag
 
-object TimeDomainAnalysis {
+object FiniteDifferences {
 
-  def finiteDifferences[R: Ring](sample: DenseVector[R])(implicit ct: ClassTag[R]): DenseVector[R] = {
+  def forwardDifference[R: Ring](domian: DenseVector[R])(implicit ct: ClassTag[R]): DenseVector[R] = {
 
-    val delayedIndices = 0 to sample.length - 2
-    val indices = 1 to sample.length -1
-    sample(indices) - sample(delayedIndices)
+    val delayedIndices = 0 to domian.length - 2
+    val indices = 1 to domian.length -1
+    domian(indices) - domian(delayedIndices)
 
 
   }

@@ -15,7 +15,7 @@ public class EntryPoint extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
         Parent root = FXMLLoader.load(getClass().getClassLoader().getResource(FXML+"BasePanel.fxml"));
-        primaryStage.setTitle("My App");
+        primaryStage.setTitle("JVM signal processing part 1");
         primaryStage.setScene(new Scene(root, 1000, 600));
         primaryStage.show();
     }

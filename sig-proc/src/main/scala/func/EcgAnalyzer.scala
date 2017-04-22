@@ -1,54 +1,58 @@
 package func
 
 import breeze.linalg.DenseVector
-import TimeDomainAnalysis.finiteDifferences
+import FiniteDifferences.forwardDifference
 import breeze.linalg._
 import breeze.stats._
 import breeze.signal.{convolve => breezeConvolve, correlate => breezeCorrelate, _}
 import scala.math.pow
 
 object EcgAnalyzer {
-  //# The raw ECG signal # Sampling rate in HZ # Window size in seconds to use for
-  def analyse ( ecg: DenseVector[Double], rate: Double,  ransacWindowSize: Double = 5.0): DenseVector[Double] = {
-    val rws = (ransacWindowSize * rate).toInt
 
-    // Square (=signal power) of the first difference of the signal
-    val decgPower: DenseVector[Double] = finiteDifferences(ecg) :^ 2.0
+  def analyse (point: DenseVector[Double], rate: Double, sampleSize: Double = 5.0): DenseVector[Double] = {
 
-    val windows = (0 until (decgPower.length / rws)) map { i =>
-      decgPower.slice(i * rws, (i+1) * rws)
+    val windowSize = (sampleSize * rate).toInt
+
+    val deltaPowerSignal: DenseVector[Double] = forwardDifference(point) :^ 2.0
+
+    val slidingSample = (0 until (deltaPowerSignal.length / windowSize)) map { i =>
+      deltaPowerSignal.slice(i * windowSize, (i+1) * windowSize)
     }
 
-    val threshold = mean(windows.map(stddev(_)))
-    val maxPower = mean(windows.map(max(_)))
+    val powerSignalThreshold = mean(slidingSample.map(stddev(_)))
+    val powerSignalMax = mean(slidingSample.map(max(_)))
 
-    val energy = lpEnergy(decgPower.toDenseVector, threshold, maxPower, rate)
+    val energy = powerSignalFilter(deltaPowerSignal.toDenseVector, powerSignalThreshold, powerSignalMax, rate)
 
     energy
   }
 
 
-  private def lpEnergy(sig: DenseVector[Double], thr: Double, maxPower: Double, rate: Double) = {
-    val shEnergy = shannonEnergy(sig, thr, maxPower)
-    val meanWindowLen = (rate * 0.125 + 1).toInt
-    convolve(shEnergy, DenseVector.fill(meanWindowLen)(1.0 / meanWindowLen))
+  private def powerSignalFilter(sig: DenseVector[Double], cuttOff: Double, maxPower: Double, rate: Double): DenseVector[Double] = {
+    val shannon_energy = normalisedShannonEnergy(sig, cuttOff, maxPower)
+    val inverseDeltaFunctionShape = (rate * 0.2 ).toInt
+    filter(shannon_energy, DenseVector.fill(inverseDeltaFunctionShape) (1.0 / inverseDeltaFunctionShape))
   }
 
 
-  private def convolve(a: DenseVector[Double], v: DenseVector[Double]): DenseVector[Double] = {
-    breezeConvolve(a, v, overhang = OptOverhang.PreserveLength)
+  private def filter(shannon_energy: DenseVector[Double], deltaFunction: DenseVector[Double]): DenseVector[Double] = {
+    breezeConvolve(shannon_energy, deltaFunction, overhang = OptOverhang.PreserveLength)
   }
 
-  private def shannonEnergy(sig: DenseVector[Double], thr: Double, maxPower: Double) = {
-    sig.map { x =>
-      if (x < thr) 0.0
+  // http://stackoverflow.com/questions/33859255/average-normalised-shannon-energy-for-phonocardiography-signals
+  private def normalisedShannonEnergy(sample: DenseVector[Double], cuttOff: Double, max: Double): DenseVector[Double] = {
+    sample.map { signal =>
+      if (signal < cuttOff) 0.0
+
       else {
-        val t = x / maxPower
-        if (t > 1.0) 0.0
+
+        val _norm = signal / max
+
+        if (_norm > 1.0) 0.0
         else {
-          val tSquared = pow(t, 2)
-          val shEnergy = -tSquared * math.log(tSquared)
-          if (shEnergy.isNaN) 0.0 else t
+          val _normSquared = pow(_norm, 2)
+          val shennon_energy = -_normSquared * math.log(_normSquared)
+          if (shennon_energy.isNaN) 0.0 else _norm
         }
       }
     }

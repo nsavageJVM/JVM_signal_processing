@@ -17,7 +17,7 @@ object Entrypoint   {
 
      val url = getClass.getResource(dataFile)
 
-     val ecgRecords = CsvIo.fromCsv[EcgRecord](url.toURI.getPath )(EcgRecord.parseEcg)
+     val ecgRecords = CsvIo.fromCsv[EcgPoint](url.toURI.getPath )(EcgPoint.parseEcg)
 
      val data = DenseVector(ecgRecords.map(_.ecg).toArray)
 
